@@ -46,7 +46,24 @@ func parse(js []byte) *PJson {
 	}
 }
 
-func (p *PJson) Get(path string) ([]interface{}, error) {
+type PJsonResult struct {
+	r  []interface{}
+	ex bool
+}
+
+func (p *PJsonResult) GetItem() (interface{}, bool) {
+	if !p.ex {
+		return nil, false
+	}
+
+	return p.r[0], p.ex
+}
+
+func (p *PJsonResult) GetList() ([]interface{}, bool) {
+	return p.r, p.ex
+}
+
+func (p *PJson) Get(path string) (*PJsonResult, error) {
 	var result []interface{}
 
 	pathLis := strings.Split(path, ".")
@@ -64,7 +81,15 @@ func (p *PJson) Get(path string) ([]interface{}, error) {
 		})
 	}
 
-	return result, p.err
+	ex := func() bool {
+		if len(result) > 0 {
+			return true
+		} else {
+			return false
+		}
+	}
+
+	return &PJsonResult{r: result, ex: ex()}, p.err
 }
 
 type packageFunc func(i interface{}, ex bool)
